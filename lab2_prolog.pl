@@ -47,9 +47,14 @@ index(["Index", []]).
 localRepo(["Local Repository", []]).
 remoteRepo(["Remote Repository",[]]).
 
+/*Antes de continuar con el resto de acciones, debemos definir que las entradas de los siguientes predicados y TDA seran definidos, por conveniencia
+como solo Strings, por lo que como medida precautiva, generaremos un predicado el cual nos asegurará que cada atomo que se le entregue sea un string,
+teniendo que convertirlo de ser necesario.*/
+asegurarString(Entrada, Salida):-(not(string(Entrada)), atom_string(Entrada, Aux), Salida=Aux);(string(Entrada), Salida = Entrada).
+
 /*luego necesitamos el creador del TDA Git, el cual es la funcion GitInit
 */
-gitInit(NombreRepo, Autor, RepoOutput):- get_time(Time), convert_time(Time, Date), workspace(W), index(I), localRepo(L), remoteRepo(R), RepoOutput = [NombreRepo, Autor, Date, [W, I, L, R]].
+gitInit(NombreRepo, Autor, RepoOutput):- get_time(Time), convert_time(Time, Date), workspace(W), index(I), localRepo(L), remoteRepo(R), asegurarString(NombreRepo, Aux1), asegurarString(Autor, Aux2),  RepoOutput = [Aux1, Aux2, Date, [W, I, L, R]].
 
 /*Teniendo esto, vamos a necesitar una funcion que nos pueda ingresar los archivos al workspace, para eso necesitaremos las siguientes funciones
 agregarCabeza->añade elementos a la cabeza de una lista
@@ -67,8 +72,8 @@ agregarCabeza(X,[Y|Ys], [X, Y|Ys]).
 toma una lista de archivos dada por el usuario y los integra en el Workspace, siendo este dado por el repositoirio git completo
 */
 agregarAWork(Z, [], Z).
-agregarAWork([N,A,F,[[Nombre,Cont],I,L,R]], [X|Xs], Out):- ((parteYa(X, Cont)), agregarAWork([N,A,F,[[Nombre,Cont],I,L,R]], Xs, Out));
-                                                           (agregarCabeza(X, Cont, Aux),agregarAWork([N,A,F,[[Nombre,Aux],I,L,R]], Xs, Out)).
+agregarAWork([N,A,F,[[Nombre,Cont],I,L,R]], [X|Xs], Out):- asegurarString(X,Aux),(((parteYa(Aux, Cont)), agregarAWork([N,A,F,[[Nombre,Cont],I,L,R]], Xs, Out));
+                                                           (agregarCabeza(Aux, Cont, Aux2),agregarAWork([N,A,F,[[Nombre,Aux2],I,L,R]], Xs, Out))).
 
 /*
 Teniendo ya archivos en el workspace, podemos hacer que estos sean agregados en el Index, para eso necesitaremos las siguientes funciones
@@ -86,9 +91,9 @@ delete([X| Xs], A, Aux, Out):- append(Aux, [X], Aux2), delete(Xs, A, Aux2, Out).
 
 
 gitAdd(Z, [], Z).
-gitAdd([N,A,F,[[NW,Work],[NI,Ind],L,R]], [X|Xs] , RepoOutput):- (parteYa(X, Work), not(parteYa(X, Ind)), agregarCabeza(X, Ind, AuxI), delete(Work, X, [], AuxW), gitAdd([N,A,F,[[NW,AuxW],[NI,AuxI],L,R]], Xs , RepoOutput));
+gitAdd([N,A,F,[[NW,Work],[NI,Ind],L,R]], [Xa|Xs] , RepoOutput):- asegurarString(Xa, X),((parteYa(X, Work), not(parteYa(X, Ind)), agregarCabeza(X, Ind, AuxI), delete(Work, X, [], AuxW), gitAdd([N,A,F,[[NW,AuxW],[NI,AuxI],L,R]], Xs , RepoOutput));
                                                          (not(parteYa(X, Work)), gitAdd([N,A,F,[[NW,Work],[NI,Ind],L,R]], Xs , RepoOutput));
-                                                         (parteYa(X, Work), parteYa(X, Ind), delete(Work, X, [], AuxW), gitAdd([N,A,F,[[NW,AuxW],[NI,Ind],L,R]], Xs , RepoOutput)).
+                                                         (parteYa(X, Work), parteYa(X, Ind), delete(Work, X, [], AuxW), gitAdd([N,A,F,[[NW,AuxW],[NI,Ind],L,R]], Xs , RepoOutput))).
 
 /* luego de esto, tenemos que pasar con el gitCommit, lo que hace esto es que toma todos los archivos del index, 
 los pasa a una lista,  y con un mensaje que agregue el ususario, se crea un commit (TDA) que tiene la forma de:
@@ -102,7 +107,7 @@ crearCommit(Lista, Mensaje, [Lista, Mensaje]).
 /*y como en este caso, se mueven los archivos, la lista de archivos del index deberia quedar vacía.*/
 /*teniendo esto listo, podemos proceder a hacer el gitCommit, lo cual hara uso de crearCommit para agregar un commit al LocalRepo.*/
 
-gitCommit([N,A,F,[W,[NI,Ind],[NL,LCommits],R]], Mensaje, RepoOutput):- not(Ind = []), crearCommit(Ind, Mensaje,Commit), append([Commit], LCommits, AuxL), RepoOutput= [N,A,F,[W,[NI,[]],[NL,AuxL],R]]. 
+gitCommit([N,A,F,[W,[NI,Ind],[NL,LCommits],R]], Mensaje, RepoOutput):- (not(Ind = []), asegurarString(Mensaje, Aux),crearCommit(Ind, Aux,Commit), append([Commit], LCommits, AuxL), RepoOutput= [N,A,F,[W,[NI,[]],[NL,AuxL],R]]); (RepoOutput = [N,A,F,[W,[NI,Ind],[NL,LCommits],R]]). 
 
 /* Luego que tenemos el commit , debemos hacer el gitPush, el cual consiste en copiar los contenidos del Repositorio Local en el 
 Repositorio Remoto. Esto será creado de forma tal que iremos revisando si el commit existe en la lista y lo pondremos en una lista auxiliar si es que no,

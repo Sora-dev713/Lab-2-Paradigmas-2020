@@ -2,7 +2,7 @@
 
 Git: Sistema de versionamiento que permite el trabajo con 
      repositorio tanto local como remoto para el almacenamiento 
-     de trabajo de codigo. Sera representao por una lista con 
+     de trabajo de codigo. Sera representado por una lista con 
      la siguiente forma:
      [Nombre del Repo, Autor, Fecha/Hora, [Zonas]].
 
@@ -112,7 +112,7 @@ commit2String([Ls, Message], String):- listaArch2String(Ls, '', Aux), atomics_to
 %Predicado que convierte a string una lista de commits (usando commit2String)
 commitList2String([], String, String).
 commitList2String([X|Xs], Strings, Salida):- ((not(Xs = [])), commit2String(X, ComString), atomics_to_string([Strings, ComString], Aux), commitList2String(Xs, Aux, Salida));
-                                             (commit2String(X, ComString), atomics_to_string([Strings, ComString, '\n'], Aux),commitList2String(Xs, Aux, Salida)).
+                                             (commit2String(X, ComString), atomics_to_string([Strings, ComString], Aux),commitList2String(Xs, Aux, Salida)).
 
 %Predicado que crea un string con los datos del Repositorio de Git.
 data2String(NR, NA, TimeAndDate, Out):- string_concat('####', NR, A1), string_concat(A1, '####', LineaRepo), string_concat('Nombre del Autor: ',NA, LineaNombre), string_concat('Fecha de Creacion: ', TimeAndDate, LineaFecha), string_concat(LineaRepo, '\n', A2), string_concat(A2, LineaNombre, A3), string_concat(A3, '\n', A4),string_concat(A4, LineaFecha, A5), string_concat(A5, '\n', Out).

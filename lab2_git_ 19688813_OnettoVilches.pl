@@ -128,22 +128,48 @@ index2String([_, LS], Salida):-(not(LS = []), listaArch2String(LS, '', ListaArch
 %Predicado que convierte un Repositorio (local o remoto) a solo un string.
 repository2String([NR, X], Salida):-commitList2String(X, '', ListComs), atomics_to_string(['Commits localizados en el ', NR, ':\n', ListComs], Salida).
 
-%####################################################%
+%####################Reglas################################%
+%Todos los ejemplos puestos tienen relación con el ejemplo 1 del caso anterior.
+%por lo que seran distintas variantes del mismo.
 
 %Predicado que genera un Repositorio Git en Blanco con los datos de identificacion dados.
 gitInit(NombreRepo, Autor, RepoOutput):- get_time(Time), convert_time(Time, Date), workspace(W), index(I), localRepo(L), remoteRepo(R), asegurarString(NombreRepo, Aux1), asegurarString(Autor, Aux2),  RepoOutput = [Aux1, Aux2, Date, [W, I, L, R]].
-
+/*Ejemplos:
+1)gitInit("Lab 2 Git", "AlumnoA", R).
+2)gitInit(lab2, alumnoB, R).
+3)gitInit(lab_2, "Bastian", R).
+*/
 %Predicado que permite agregar archivos del Workspace y los mueve al Index
 gitAdd(Z, [], Z).
 gitAdd([N,A,F,[[NW,Work],[NI,Ind],L,R]], [Xa|Xs] , RepoOutput):- asegurarString(Xa, X),((parteYa(X, Work), not(parteYa(X, Ind)), agregarCabeza(X, Ind, AuxI), delete(Work, X, [], AuxW), gitAdd([N,A,F,[[NW,AuxW],[NI,AuxI],L,R]], Xs , RepoOutput));
                                                          (not(parteYa(X, Work)), gitAdd([N,A,F,[[NW,Work],[NI,Ind],L,R]], Xs , RepoOutput));
                                                          (parteYa(X, Work), parteYa(X, Ind), delete(Work, X, [], AuxW), gitAdd([N,A,F,[[NW,AuxW],[NI,Ind],L,R]], Xs , RepoOutput))).
-
+/*Ejemplos: (todos iran luego de un:
+agregarAWork(R, [“arch1.txt”, “arch2.txt”,”arch3.txt”,”arch4.txt”], R2) ).
+1)gitAdd(R2, ["arch1.txt", "arch2.txt"], R3).
+2)gitAdd(R2, ["arch3.txt"], R3).
+3)gitAdd(R2, ["Bastian"], R3).
+*/
 %Predicado que crea un commit y lo guarda en el repositorio local, el index es limpiado. 
 gitCommit([N,A,F,[W,[NI,Ind],[NL,LCommits],R]], Mensaje, RepoOutput):- (not(Ind = []), asegurarString(Mensaje, Aux),crearCommit(Ind, Aux,Commit), append([Commit], LCommits, AuxL), RepoOutput= [N,A,F,[W,[NI,[]],[NL,AuxL],R]]); (RepoOutput = [N,A,F,[W,[NI,Ind],[NL,LCommits],R]]). 
-
+/*Ejemplos:
+1)gitCommit(R3, "Este es el 1er commit del 1er ejemplo", R4).
+2)gitCommit(R3, "este es el segundo ejemplo de commit", R4).
+3)gitCommit(R3, commit_variado, R4).
+*/
 %Predicado que copia los ultimos commits realizados y los guarda en el repositorio Remoto.
 gitPush([N,A,F,[W,I,[NL,LCommits],[NR,RCommits]]], RepoOutput):- filtrarLista(LCommits, RCommits, [], Aux), append(Aux, RCommits, Aux2), RepoOutput =[N,A,F,[W,I,[NL,LCommits],[NR,Aux2]]].
-
+/*Ejemplos:
+1)gitPush(R4, R5).
+El resto de ejemplos no siguen relacion con los anteriores
+2)gitInit("Lab 2 Git", "AlumnoA", R),agregarAWork(R, ["arch1.txt", "arch2.txt","arch3.txt","arch4.txt"], R2),gitAdd(R2, ["arch1.txt"], R3),gitCommit(R3, "1er Commit", R4), gitAdd(R4, ["arch2.txt"], R5), gitCommit(R5, "segundo commit", R6), gitPush(R6, R7).
+3)gitInit("Lab 2 Git", "AlumnoA", R),agregarAWork(R, ["arch1.txt", "arch2.txt","arch3.txt","arch4.txt"], R2),gitAdd(R2, ["arch1.txt"], R3),gitCommit(R3, "3er Commit", R4), gitAdd(R4, ["arch3.txt"], R5), gitCommit(R5, "cuarto", R6),gitAdd(R6, ["arch2.txt"], R7), gitCommit(R7, "segundo commit", R8), gitPush(R8, R9).
+*/
 %Predicado que usa los auxiliares para generar un String con el estado actual del repositorio de Git
 git2String([N,A,T,[W,I,L,R]], StringOutput):-data2String(N,A,T, Datos), workspace2String(W, Workspace), index2String(I, Index), repository2String(L, Local), repository2String(R, Remo), atomics_to_string([Datos, Workspace, Index, Local, Remo], Salida), StringOutput= Salida.
+/*Ejemplos:
+1)git2String(R5, Rs).
+El resto de ejemplos no tiene relacion con los anteriores
+2)gitInit("Lab 2 Git", "AlumnoA", R),git2string(R, RS).
+3)gitInit("Lab 2 Git", "AlumnoA", R),agregarAWork(R, ["arch1.txt", "arch2.txt","arch3.txt","arch4.txt"], R2),gitAdd(R2, ["arch1.txt", "arch2.txt"], R3), git2String(R3, RS).
+*/
